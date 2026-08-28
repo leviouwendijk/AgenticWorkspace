@@ -11,14 +11,14 @@ public struct StructuralSelection: Sendable, Hashable {
         case imports
     }
 
-    public let path: ScopedPath
+    public let path: DescendantPath
     public let lineRange: LineRange
     public let kind: Kind
     public let symbolName: String?
     public let summary: String?
 
     public init(
-        path: ScopedPath,
+        path: DescendantPath,
         lineRange: LineRange,
         kind: Kind,
         symbolName: String? = nil,

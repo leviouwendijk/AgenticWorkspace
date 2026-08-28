@@ -2,14 +2,14 @@ import Path
 import Readers
 
 public struct ScopedWorkspaceRead: Sendable, Codable, Equatable {
-    public let path: ScopedPath
+    public let path: DescendantPath
     public let text: String
     public let encodingUsed: TextEncoding?
     public let byteCount: Int
     public let existed: Bool
 
     public init(
-        path: ScopedPath,
+        path: DescendantPath,
         text: String,
         encodingUsed: TextEncoding?,
         byteCount: Int,

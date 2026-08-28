@@ -2,11 +2,11 @@ import Path
 
 public struct ScopedWorkspaceScan: Sendable, Codable, Equatable {
     public struct Entry: Sendable, Codable, Equatable {
-        public let path: ScopedPath
+        public let path: DescendantPath
         public let isDirectory: Bool
 
         public init(
-            path: ScopedPath,
+            path: DescendantPath,
             isDirectory: Bool
         ) {
             self.path = path
@@ -20,11 +20,11 @@ public struct ScopedWorkspaceScan: Sendable, Codable, Equatable {
         }
     }
 
-    public let directory: ScopedPath?
+    public let directory: DescendantPath?
     public let entries: [Entry]
 
     public init(
-        directory: ScopedPath? = nil,
+        directory: DescendantPath? = nil,
         entries: [Entry] = []
     ) {
         self.directory = directory

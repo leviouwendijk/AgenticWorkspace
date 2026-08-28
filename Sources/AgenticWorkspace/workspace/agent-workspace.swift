@@ -278,11 +278,11 @@ private extension AgentWorkspace {
 
 public extension AgentWorkspace {
     func evaluateAccess(
-        _ path: ScopedPath,
+        _ path: DescendantPath,
         type: PathSegmentType? = nil
     ) -> PathAccessEvaluation {
-        if let scoped = try? scope(containing: path) {
-            return scoped.evaluate(
+        if let scope = try? scope(containing: path) {
+            return scope.evaluate(
                 path,
                 type: type
             )
@@ -296,9 +296,9 @@ public extension AgentWorkspace {
 
     @discardableResult
     func requireAccessible(
-        _ path: ScopedPath,
+        _ path: DescendantPath,
         type: PathSegmentType? = nil
-    ) throws -> ScopedPath {
+    ) throws -> DescendantPath {
         try scope(
             containing: path
         ).requireAccessible(
@@ -310,7 +310,7 @@ public extension AgentWorkspace {
     func resolve(
         _ path: StandardPath,
         type: PathSegmentType? = nil
-    ) throws -> ScopedPath {
+    ) throws -> DescendantPath {
         try accessController.paths.resolve(
             path,
             rootIdentifier: nil,
@@ -322,7 +322,7 @@ public extension AgentWorkspace {
         rootID: PathAccessRootIdentifier,
         _ path: StandardPath,
         type: PathSegmentType? = nil
-    ) throws -> ScopedPath {
+    ) throws -> DescendantPath {
         try accessController.paths.resolve(
             path,
             rootIdentifier: rootID,
@@ -334,7 +334,7 @@ public extension AgentWorkspace {
         rawPath: String,
         filetype: AnyFileType? = nil,
         type: PathSegmentType? = nil
-    ) throws -> ScopedPath {
+    ) throws -> DescendantPath {
         try accessController.paths.resolve(
             rawPath,
             rootIdentifier: nil,
@@ -348,7 +348,7 @@ public extension AgentWorkspace {
         rawPath: String,
         filetype: AnyFileType? = nil,
         type: PathSegmentType? = nil
-    ) throws -> ScopedPath {
+    ) throws -> DescendantPath {
         try accessController.paths.resolve(
             rawPath,
             rootIdentifier: rootID,
@@ -361,7 +361,7 @@ public extension AgentWorkspace {
         _ rawPath: String,
         filetype: AnyFileType? = nil,
         type: PathSegmentType? = nil
-    ) throws -> ScopedPath {
+    ) throws -> DescendantPath {
         try accessController.paths.resolve(
             rawPath,
             rootIdentifier: nil,
@@ -375,7 +375,7 @@ public extension AgentWorkspace {
         _ rawPath: String,
         filetype: AnyFileType? = nil,
         type: PathSegmentType? = nil
-    ) throws -> ScopedPath {
+    ) throws -> DescendantPath {
         try accessController.paths.resolve(
             rawPath,
             rootIdentifier: rootID,
@@ -387,7 +387,7 @@ public extension AgentWorkspace {
     func scope(
         _ url: URL,
         type: PathSegmentType? = nil
-    ) throws -> ScopedPath {
+    ) throws -> DescendantPath {
         try accessController.paths.scope(
             url,
             rootIdentifier: nil,
@@ -399,7 +399,7 @@ public extension AgentWorkspace {
         rootID: PathAccessRootIdentifier,
         _ url: URL,
         type: PathSegmentType? = nil
-    ) throws -> ScopedPath {
+    ) throws -> DescendantPath {
         try accessController.paths.scope(
             url,
             rootIdentifier: rootID,
@@ -408,24 +408,24 @@ public extension AgentWorkspace {
     }
 
     func absoluteURL(
-        for path: ScopedPath,
+        for path: DescendantPath,
         type: PathSegmentType? = nil
     ) throws -> URL {
-        let scoped = try requireAccessible(
+        let descendant = try requireAccessible(
             path,
             type: type
         )
 
         return try scope(
-            containing: scoped
+            containing: descendant
         ).absoluteURL(
-            for: scoped,
+            for: descendant,
             type: type
         )
     }
 
     func existingType(
-        of path: ScopedPath
+        of path: DescendantPath
     ) throws -> PathSegmentType? {
         try scope(
             containing: path
@@ -435,7 +435,7 @@ public extension AgentWorkspace {
     }
 
     func contains(
-        _ path: ScopedPath,
+        _ path: DescendantPath,
         type: PathSegmentType? = nil
     ) -> Bool {
         (try? requireAccessible(
@@ -458,7 +458,7 @@ public extension AgentWorkspace {
 
 public extension AgentWorkspace {
     func read(
-        _ path: ScopedPath,
+        _ path: DescendantPath,
         encoding: String.Encoding = .utf8
     ) throws -> ScopedWorkspaceRead {
         try read(
@@ -474,7 +474,7 @@ public extension AgentWorkspace {
     }
 
     func read(
-        _ path: ScopedPath,
+        _ path: DescendantPath,
         options: TextReadOptions = .init(
             decoding: .commonTextFallbacks,
             missingFilePolicy: .throwError,
@@ -504,7 +504,7 @@ public extension AgentWorkspace {
     }
 
     func readLines(
-        _ path: ScopedPath,
+        _ path: DescendantPath,
         options: LineReadOptions = .default
     ) throws -> ScopedWorkspaceLineRead {
         let path = try requireAccessible(
@@ -530,7 +530,7 @@ public extension AgentWorkspace {
     }
 
     func readSlice(
-        _ path: ScopedPath,
+        _ path: DescendantPath,
         range: LineRange?,
         maxLines: Int? = nil,
         options: LineReadOptions = .default
@@ -563,7 +563,7 @@ public extension AgentWorkspace {
     }
 
     func readSlice(
-        _ path: ScopedPath,
+        _ path: DescendantPath,
         startLine: Int? = nil,
         endLine: Int? = nil,
         maxLines: Int? = nil,
@@ -598,7 +598,7 @@ public extension AgentWorkspace {
     }
 
     func readData(
-        _ path: ScopedPath,
+        _ path: DescendantPath,
         options: DataReadOptions = .default
     ) throws -> ScopedWorkspaceDataRead {
         let path = try requireAccessible(
@@ -623,7 +623,7 @@ public extension AgentWorkspace {
     }
 
     func readBase64(
-        _ path: ScopedPath,
+        _ path: DescendantPath,
         options: DataReadOptions = .default
     ) throws -> ScopedWorkspaceBase64Read {
         let path = try requireAccessible(
@@ -649,7 +649,7 @@ public extension AgentWorkspace {
     }
 
     func readSelection(
-        _ path: ScopedPath,
+        _ path: DescendantPath,
         _ selection: ContentSelection,
         options: LineReadOptions = .default
     ) throws -> ScopedWorkspaceSelectionRead {
@@ -663,7 +663,7 @@ public extension AgentWorkspace {
     }
 
     func readSelections(
-        _ path: ScopedPath,
+        _ path: DescendantPath,
         _ selections: [ContentSelection],
         options: LineReadOptions = .default
     ) throws -> ScopedWorkspaceSelectionRead {
@@ -714,7 +714,7 @@ public extension AgentWorkspace {
 
     func scopedEntries(
         from result: PathScanResult,
-        excluding scannedPath: ScopedPath? = nil,
+        excluding scannedPath: DescendantPath? = nil,
         rootID: PathAccessRootIdentifier? = nil
     ) -> [ScopedWorkspaceScan.Entry] {
         guard let root = try? accessController.paths.root(
@@ -724,27 +724,27 @@ public extension AgentWorkspace {
         }
 
         return result.matches.compactMap { match in
-            guard let scoped = root.scope.scopedPath(
+            guard let descendant = root.scope.descendant(
                 from: match
             ) else {
                 return nil
             }
 
             if let scannedPath,
-               scoped.root == scannedPath.root,
-               scoped.relative == scannedPath.relative {
+               descendant.root == scannedPath.root,
+               descendant.relative == scannedPath.relative {
                 return nil
             }
 
             guard (try? root.scope.requireAccessible(
-                scoped,
+                descendant,
                 type: match.type
             )) != nil else {
                 return nil
             }
 
             return .init(
-                path: scoped,
+                path: descendant,
                 isDirectory: match.type == .directory
             )
         }
@@ -755,28 +755,28 @@ public extension AgentWorkspace {
         rootID: PathAccessRootIdentifier,
         capability: PathCapability,
         toolName: String,
-        excluding scannedPath: ScopedPath? = nil
+        excluding scannedPath: DescendantPath? = nil
     ) throws -> [ScopedWorkspaceScan.Entry] {
         let root = try accessController.root(
             id: rootID
         )
 
         return result.matches.compactMap { match in
-            guard let scoped = root.scope.scopedPath(
+            guard let descendant = root.scope.descendant(
                 from: match
             ) else {
                 return nil
             }
 
             if let scannedPath,
-               scoped.root == scannedPath.root,
-               scoped.relative == scannedPath.relative {
+               descendant.root == scannedPath.root,
+               descendant.relative == scannedPath.relative {
                 return nil
             }
 
             guard let authorized = try? accessController.authorize(
                 rootID: root.id,
-                scopedPath: scoped,
+                path: descendant,
                 capability: capability,
                 toolName: toolName,
                 type: match.type
@@ -785,7 +785,7 @@ public extension AgentWorkspace {
             }
 
             return .init(
-                path: authorized.scopedPath,
+                path: authorized.path,
                 isDirectory: match.type == .directory
             )
         }
@@ -794,7 +794,7 @@ public extension AgentWorkspace {
 
 private extension AgentWorkspace {
     func root(
-        containing path: ScopedPath
+        containing path: DescendantPath
     ) throws -> PathAccessRoot {
         let roots = accessController.paths.roots.values.sorted {
             $0.id.rawValue < $1.id.rawValue
@@ -805,7 +805,7 @@ private extension AgentWorkspace {
                 path
             )
         }) else {
-            throw WorkspaceAccessError.scopedPathRootNotFound(
+            throw WorkspaceAccessError.pathOutsideRoots(
                 path.presentingRelative(
                     filetype: true
                 )
@@ -816,7 +816,7 @@ private extension AgentWorkspace {
     }
 
     func scope(
-        containing path: ScopedPath
+        containing path: DescendantPath
     ) throws -> PathAccessScope {
         try root(
             containing: path

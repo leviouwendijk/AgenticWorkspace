@@ -3,7 +3,7 @@ import Path
 
 public enum WorkspaceAccessError: Error, Sendable, LocalizedError, Equatable {
     case rootNotFound(PathAccessRootIdentifier)
-    case scopedPathRootNotFound(String)
+    case pathOutsideRoots(String)
     case grantDenied(
         rootID: PathAccessRootIdentifier,
         capability: PathCapability,
@@ -15,8 +15,8 @@ public enum WorkspaceAccessError: Error, Sendable, LocalizedError, Equatable {
         case .rootNotFound(let rootID):
             return "No workspace path root exists for identifier '\(rootID.rawValue)'."
 
-        case .scopedPathRootNotFound(let path):
-            return "No workspace path root contains scoped path '\(path)'."
+        case .pathOutsideRoots(let path):
+            return "No workspace path root contains path '\(path)'."
 
         case .grantDenied(let rootID, let capability, let toolName):
             return """

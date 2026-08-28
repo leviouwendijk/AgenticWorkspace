@@ -118,14 +118,14 @@ public extension WorkspaceAccessController {
 
     func authorize(
         rootID: PathAccessRootIdentifier = .project,
-        scopedPath: ScopedPath,
+        path: DescendantPath,
         capability: PathCapability,
         toolName: String,
         type: PathSegmentType? = nil,
         now: Date = Date()
     ) throws -> AgenticAuthorizedPath {
         let authorizedPath = try paths.authorize(
-            scopedPath,
+            path,
             rootIdentifier: rootID,
             type: type
         )

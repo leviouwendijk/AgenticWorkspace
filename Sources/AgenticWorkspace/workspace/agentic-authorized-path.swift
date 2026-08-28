@@ -32,8 +32,13 @@ public extension AgenticAuthorizedPath {
         rootIdentifier
     }
 
-    var scopedPath: ScopedPath {
-        authorizedPath.scopedPath
+    var path: DescendantPath {
+        authorizedPath.path
+    }
+
+    @available(*, deprecated, renamed: "path")
+    var scopedPath: DescendantPath {
+        path
     }
 
     var absoluteURL: URL {

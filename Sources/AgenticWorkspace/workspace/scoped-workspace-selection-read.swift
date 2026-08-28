@@ -4,7 +4,7 @@ import Readers
 import Selection
 
 public struct ScopedWorkspaceSelectionRead: Sendable, Codable, Equatable {
-    public let path: ScopedPath
+    public let path: DescendantPath
     public let slices: [FileLineSlice]
     public let totalLineCount: Int
     public let encodingUsed: TextEncoding?
@@ -12,7 +12,7 @@ public struct ScopedWorkspaceSelectionRead: Sendable, Codable, Equatable {
     public let existed: Bool
 
     public init(
-        path: ScopedPath,
+        path: DescendantPath,
         slices: [FileLineSlice],
         totalLineCount: Int,
         encodingUsed: TextEncoding?,
@@ -28,7 +28,7 @@ public struct ScopedWorkspaceSelectionRead: Sendable, Codable, Equatable {
     }
 
     public init(
-        path: ScopedPath,
+        path: DescendantPath,
         resolved: ResolvedFileSelection
     ) {
         self.init(

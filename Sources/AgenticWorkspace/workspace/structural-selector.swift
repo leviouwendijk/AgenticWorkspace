@@ -2,14 +2,14 @@ import Path
 
 public protocol StructuralSelector: Sendable {
     func selections(
-        in file: ScopedPath,
+        in file: DescendantPath,
         query: StructuralQuery
     ) async throws -> [StructuralSelection]
 }
 
 public extension StructuralSelector {
     func selection(
-        in file: ScopedPath,
+        in file: DescendantPath,
         query: StructuralQuery
     ) async throws -> StructuralSelection? {
         try await selections(

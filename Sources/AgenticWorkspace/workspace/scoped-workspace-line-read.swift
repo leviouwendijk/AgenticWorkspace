@@ -3,14 +3,14 @@ import Position
 import Readers
 
 public struct ScopedWorkspaceLineRead: Sendable, Codable, Equatable {
-    public let path: ScopedPath
+    public let path: DescendantPath
     public let lines: [String]
     public let encodingUsed: TextEncoding?
     public let byteCount: Int
     public let existed: Bool
 
     public init(
-        path: ScopedPath,
+        path: DescendantPath,
         lines: [String],
         encodingUsed: TextEncoding?,
         byteCount: Int,
@@ -54,7 +54,7 @@ public struct ScopedWorkspaceLineRead: Sendable, Codable, Equatable {
 }
 
 public struct ScopedWorkspaceLineSliceRead: Sendable, Codable, Equatable {
-    public let path: ScopedPath
+    public let path: DescendantPath
     public let selectedLines: [String]
     public let selectedLineRange: LineRange?
     public let totalLineCount: Int
@@ -64,7 +64,7 @@ public struct ScopedWorkspaceLineSliceRead: Sendable, Codable, Equatable {
     public let existed: Bool
 
     public init(
-        path: ScopedPath,
+        path: DescendantPath,
         selectedLines: [String],
         selectedLineRange: LineRange?,
         totalLineCount: Int,

@@ -2,13 +2,13 @@ import Foundation
 import Path
 
 public struct ScopedWorkspaceDataRead: Sendable, Codable, Equatable {
-    public let path: ScopedPath
+    public let path: DescendantPath
     public let data: Data
     public let byteCount: Int
     public let existed: Bool
 
     public init(
-        path: ScopedPath,
+        path: DescendantPath,
         data: Data,
         byteCount: Int,
         existed: Bool
@@ -31,14 +31,14 @@ public struct ScopedWorkspaceDataRead: Sendable, Codable, Equatable {
 }
 
 public struct ScopedWorkspaceBase64Read: Sendable, Codable, Equatable {
-    public let path: ScopedPath
+    public let path: DescendantPath
     public let base64: String
     public let mediaType: String?
     public let byteCount: Int
     public let existed: Bool
 
     public init(
-        path: ScopedPath,
+        path: DescendantPath,
         base64: String,
         mediaType: String?,
         byteCount: Int,
