@@ -54,6 +54,10 @@ let package = Package(
                     package: "Path"
                 ),
                 .product(
+                    name: "PathParsing",
+                    package: "Path"
+                ),
+                .product(
                     name: "Position",
                     package: "Position"
                 ),

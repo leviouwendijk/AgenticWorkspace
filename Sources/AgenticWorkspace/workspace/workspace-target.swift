@@ -73,6 +73,11 @@ public extension AgentWorkspace {
             type: .directory
         )
 
+        _ = try requireAccessible(
+            path,
+            type: .directory
+        )
+
         guard let existingType = try existingType(
             of: path
         ) else {

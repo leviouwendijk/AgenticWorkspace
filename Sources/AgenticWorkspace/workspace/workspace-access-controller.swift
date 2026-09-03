@@ -5,26 +5,82 @@ import Path
 public struct WorkspaceAccessController: Sendable, Codable, Hashable {
     public var paths: PathAccessController
     public var grants: [PathGrant]
+    public var selections:
+        [PathAccessRootIdentifier: WorkspaceSelection]
 
     public init(
         paths: PathAccessController = .init(),
-        grants: [PathGrant] = []
+        grants: [PathGrant] = [],
+        selections:
+            [PathAccessRootIdentifier: WorkspaceSelection] = [:]
     ) {
         self.paths = paths
         self.grants = grants
+        self.selections = selections
     }
 
     public init(
         roots: [PathAccessRoot] = [],
         defaultRootIdentifier: PathAccessRootIdentifier? = nil,
-        grants: [PathGrant] = []
+        grants: [PathGrant] = [],
+        selections:
+            [PathAccessRootIdentifier: WorkspaceSelection] = [:]
     ) {
         self.init(
             paths: .init(
                 roots: roots,
                 defaultRootIdentifier: defaultRootIdentifier
             ),
-            grants: grants
+            grants: grants,
+            selections: selections
+        )
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case paths
+        case grants
+        case selections
+    }
+
+    public init(
+        from decoder: Decoder
+    ) throws {
+        let container = try decoder.container(
+            keyedBy: CodingKeys.self
+        )
+
+        paths = try container.decode(
+            PathAccessController.self,
+            forKey: .paths
+        )
+        grants = try container.decodeIfPresent(
+            [PathGrant].self,
+            forKey: .grants
+        ) ?? []
+        selections = try container.decodeIfPresent(
+            [PathAccessRootIdentifier: WorkspaceSelection].self,
+            forKey: .selections
+        ) ?? [:]
+    }
+
+    public func encode(
+        to encoder: Encoder
+    ) throws {
+        var container = encoder.container(
+            keyedBy: CodingKeys.self
+        )
+
+        try container.encode(
+            paths,
+            forKey: .paths
+        )
+        try container.encode(
+            grants,
+            forKey: .grants
+        )
+        try container.encode(
+            selections,
+            forKey: .selections
         )
     }
 }
@@ -35,7 +91,8 @@ public extension WorkspaceAccessController {
         id: PathAccessRootIdentifier = .project,
         label: String = "Project",
         details: String? = nil,
-        grant: PathGrant? = nil
+        grant: PathGrant? = nil,
+        selection: WorkspaceSelection = .all
     ) -> Self {
         .init(
             paths: .project(
@@ -48,6 +105,9 @@ public extension WorkspaceAccessController {
                 grant ?? .defaultProjectGrant(
                     rootID: id
                 )
+            ],
+            selections: [
+                id: selection
             ]
         )
     }
@@ -164,12 +224,14 @@ public extension WorkspaceAccessController {
 public extension WorkspaceAccessController {
     func installing(
         root: PathAccessRoot,
-        grant: PathGrant? = nil
+        grant: PathGrant? = nil,
+        selection: WorkspaceSelection = .all
     ) -> Self {
         var copy = self
         copy.paths = copy.paths.installing(
             root
         )
+        copy.selections[root.id] = selection
 
         if let grant {
             copy = copy.installingGrant(
@@ -186,7 +248,8 @@ public extension WorkspaceAccessController {
         scope: PathAccessScope,
         details: String? = nil,
         isDefault: Bool = false,
-        grant: PathGrant? = nil
+        grant: PathGrant? = nil,
+        selection: WorkspaceSelection = .all
     ) -> Self {
         installing(
             root: .init(
@@ -196,7 +259,8 @@ public extension WorkspaceAccessController {
                 details: details,
                 isDefault: isDefault
             ),
-            grant: grant
+            grant: grant,
+            selection: selection
         )
     }
 
@@ -229,6 +293,9 @@ public extension WorkspaceAccessController {
         var copy = self
         copy.paths = copy.paths.removingRoot(
             identifier: id
+        )
+        copy.selections.removeValue(
+            forKey: id
         )
 
         if removeGrants {
@@ -298,6 +365,46 @@ public extension WorkspaceAccessController {
     }
 }
 
+public extension WorkspaceAccessController {
+    func selection(
+        rootID: PathAccessRootIdentifier
+    ) -> WorkspaceSelection {
+        selections[rootID] ?? .all
+    }
+
+    func withSelection(
+        _ selection: WorkspaceSelection,
+        rootID: PathAccessRootIdentifier = .project
+    ) -> Self {
+        var copy = self
+        copy.selections[rootID] = selection
+        return copy
+    }
+
+    @discardableResult
+    func requireSelected(
+        rootID: PathAccessRootIdentifier,
+        path: DescendantPath,
+        type: PathSegmentType? = nil
+    ) throws -> DescendantPath {
+        guard selection(
+            rootID: rootID
+        ).allows(
+            path,
+            type: type
+        ) else {
+            throw WorkspaceAccessError.selectionDenied(
+                rootID: rootID,
+                path: path.presentingRelative(
+                    filetype: true
+                )
+            )
+        }
+
+        return path
+    }
+}
+
 private extension WorkspaceAccessController {
     func authorize(
         _ authorizedPath: Path.AuthorizedPath,
@@ -305,6 +412,20 @@ private extension WorkspaceAccessController {
         toolName: String,
         now: Date
     ) throws -> AgenticAuthorizedPath {
+        let selectionChecks: [String]
+
+        if capability == .scan {
+            selectionChecks = []
+        } else {
+            _ = try requireSelected(
+                rootID: authorizedPath.rootIdentifier,
+                path: authorizedPath.path
+            )
+            selectionChecks = [
+                "workspace_selection_allowed"
+            ]
+        }
+
         let grant = try requireGrant(
             rootID: authorizedPath.rootIdentifier,
             capability: capability,
@@ -317,11 +438,12 @@ private extension WorkspaceAccessController {
             capability: capability,
             toolName: toolName,
             grantID: grant.id,
-            agenticPolicyChecks: [
-                "grant_allowed",
-                "capability_allowed",
-                "tool_allowed"
-            ]
+            agenticPolicyChecks:
+                selectionChecks + [
+                    "grant_allowed",
+                    "capability_allowed",
+                    "tool_allowed"
+                ]
         )
     }
 

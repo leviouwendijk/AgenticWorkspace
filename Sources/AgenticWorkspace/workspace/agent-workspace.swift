@@ -19,7 +19,8 @@ public struct AgentWorkspace: Sendable, Codable, Equatable {
 
     public init(
         root: StandardPath,
-        accessPolicy: PathAccessPolicy = .defaults.workspace
+        accessPolicy: PathAccessPolicy = .defaults.workspace,
+        selection: WorkspaceSelection = .all
     ) throws {
         let scope = try PathAccessScope(
             root: root,
@@ -27,13 +28,18 @@ public struct AgentWorkspace: Sendable, Codable, Equatable {
         )
 
         self.init(
-            scope: scope
+            scope: scope,
+            accessController: .project(
+                scope: scope,
+                selection: selection
+            )
         )
     }
 
     public init(
         root: URL,
-        accessPolicy: PathAccessPolicy = .defaults.workspace
+        accessPolicy: PathAccessPolicy = .defaults.workspace,
+        selection: WorkspaceSelection = .all
     ) throws {
         let scope = try PathAccessScope(
             root: root,
@@ -41,7 +47,11 @@ public struct AgentWorkspace: Sendable, Codable, Equatable {
         )
 
         self.init(
-            scope: scope
+            scope: scope,
+            accessController: .project(
+                scope: scope,
+                selection: selection
+            )
         )
     }
 }
@@ -90,6 +100,18 @@ public extension AgentWorkspace {
         )
     }
 
+    func withSelection(
+        _ selection: WorkspaceSelection,
+        rootID: PathAccessRootIdentifier = .project
+    ) -> Self {
+        withAccessController(
+            accessController.withSelection(
+                selection,
+                rootID: rootID
+            )
+        )
+    }
+
     func withPolicy(
         _ policy: PathAccessPolicy
     ) -> Self {
@@ -132,13 +154,15 @@ public extension AgentWorkspace {
 
     func installingRoot(
         _ root: PathAccessRoot,
-        grant: PathGrant? = nil
+        grant: PathGrant? = nil,
+        selection: WorkspaceSelection = .all
     ) -> Self {
         .init(
             scope: scope,
             accessController: accessController.installing(
                 root: root,
-                grant: grant
+                grant: grant,
+                selection: selection
             )
         )
     }
@@ -153,7 +177,8 @@ public extension AgentWorkspace {
         allowedTools: [String] = [],
         details: String? = nil,
         reason: String? = nil,
-        expiresAt: Date? = nil
+        expiresAt: Date? = nil,
+        selection: WorkspaceSelection = .all
     ) throws -> Self {
         let scope = try PathAccessScope(
             root: root,
@@ -175,7 +200,8 @@ public extension AgentWorkspace {
                 allowedTools: allowedTools,
                 reason: reason,
                 expiresAt: expiresAt
-            )
+            ),
+            selection: selection
         )
     }
 
@@ -189,7 +215,8 @@ public extension AgentWorkspace {
         allowedTools: [String] = [],
         details: String? = nil,
         reason: String? = nil,
-        expiresAt: Date? = nil
+        expiresAt: Date? = nil,
+        selection: WorkspaceSelection = .all
     ) throws -> Self {
         let scope = try PathAccessScope(
             root: root,
@@ -211,7 +238,8 @@ public extension AgentWorkspace {
                 allowedTools: allowedTools,
                 reason: reason,
                 expiresAt: expiresAt
-            )
+            ),
+            selection: selection
         )
     }
 
@@ -299,10 +327,17 @@ public extension AgentWorkspace {
         _ path: DescendantPath,
         type: PathSegmentType? = nil
     ) throws -> DescendantPath {
-        try scope(
+        let root = try root(
             containing: path
-        ).requireAccessible(
+        )
+        let accessible = try root.scope.requireAccessible(
             path,
+            type: type
+        )
+
+        return try accessController.requireSelected(
+            rootID: root.id,
+            path: accessible,
             type: type
         )
     }
@@ -448,11 +483,20 @@ public extension AgentWorkspace {
         _ path: StandardPath,
         type: PathSegmentType? = nil
     ) -> Bool {
-        (try? accessController.paths.authorize(
+        guard let authorized = try? accessController.paths.authorize(
             path,
             rootIdentifier: nil,
             type: type
-        )) != nil
+        ) else {
+            return false
+        }
+
+        return accessController.selection(
+            rootID: authorized.rootIdentifier
+        ).allows(
+            authorized.path,
+            type: type
+        )
     }
 }
 
@@ -704,10 +748,26 @@ public extension AgentWorkspace {
             configuration: configuration
         )
 
+        let selection = accessController.selection(
+            rootID: root.id
+        )
+        let matches = root.scope.filteredMatches(
+            from: result
+        ).filter { match in
+            guard let descendant = root.scope.descendant(
+                from: match
+            ) else {
+                return false
+            }
+
+            return selection.allows(
+                descendant,
+                type: match.type
+            )
+        }
+
         return .init(
-            matches: root.scope.filteredMatches(
-                from: result
-            ),
+            matches: matches,
             warnings: result.warnings
         )
     }
@@ -736,7 +796,7 @@ public extension AgentWorkspace {
                 return nil
             }
 
-            guard (try? root.scope.requireAccessible(
+            guard (try? requireAccessible(
                 descendant,
                 type: match.type
             )) != nil else {
@@ -771,6 +831,15 @@ public extension AgentWorkspace {
             if let scannedPath,
                descendant.root == scannedPath.root,
                descendant.relative == scannedPath.relative {
+                return nil
+            }
+
+            guard accessController.selection(
+                rootID: root.id
+            ).allows(
+                descendant,
+                type: match.type
+            ) else {
                 return nil
             }
 

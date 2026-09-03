@@ -4,6 +4,10 @@ import Path
 public enum WorkspaceAccessError: Error, Sendable, LocalizedError, Equatable {
     case rootNotFound(PathAccessRootIdentifier)
     case pathOutsideRoots(String)
+    case selectionDenied(
+        rootID: PathAccessRootIdentifier,
+        path: String
+    )
     case grantDenied(
         rootID: PathAccessRootIdentifier,
         capability: PathCapability,
@@ -17,6 +21,9 @@ public enum WorkspaceAccessError: Error, Sendable, LocalizedError, Equatable {
 
         case .pathOutsideRoots(let path):
             return "No workspace path root contains path '\(path)'."
+
+        case .selectionDenied(let rootID, let path):
+            return "Workspace selection denied path '\(path)' in root '\(rootID.rawValue)'."
 
         case .grantDenied(let rootID, let capability, let toolName):
             return """
